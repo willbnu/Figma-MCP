@@ -175,3 +175,11 @@
 - No external network access required
 - Channel-based isolation
 - Log security-relevant operations
+
+## CLI & Agent Execution Rules (for all agents)
+- Use PowerShell separators (`;`) in this repo (avoid `&&`) and set cwd explicitly (`Set-Location -Path "D:\\Figma MCP"`).
+- Before running commands, confirm the current directory with `pwd`/`Get-Location`; avoid modifying files outside the repo.
+- Git hygiene: remove nested `.git` folders before `git add .`; check `git status --short` prior to committing; commit message format: `chore: ...`, `fix: ...`, `docs: ...`, `feat: ...`.
+- Do not push secrets: inspect `.env`, `.cursor/mcp.json`, and `docs/design-systems/checkout/extracted-data/*.json` before publishing.
+- Logging: keep MCP/Figma logs on stderr and in `[Figma] [Category] [Action] …` format; do not write logs to stdout.
+- Progress updates must be 0–100% and emit 100 on completion.
