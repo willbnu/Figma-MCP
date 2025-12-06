@@ -1,0 +1,177 @@
+# MCP Figma Server Rules
+
+## Core Principles
+
+### Figma Operations Focus
+- **Always join channel first** - Use `mcp_TalkToFigma_join_channel` before ANY operation
+- **Get information before modifying** - Use `get_document_info`, `get_selection`, `read_my_design` to understand context
+- **Verify after changes** - Always use `get_node_info` or `get_selection` to confirm modifications
+- **Use batch operations** - Prefer `set_multiple_text_contents`, `set_multiple_annotations`, `delete_multiple_nodes`
+
+### Information Retrieval Priority
+1. **Document Overview:** Start with `get_document_info` to understand structure
+2. **Current Context:** Use `get_selection` to see what's selected
+3. **Detailed Analysis:** Use `read_my_design` for selected elements or `get_node_info` for specific nodes
+4. **Bulk Scanning:** Use `scan_text_nodes` or `scan_nodes_by_types` before bulk operations
+5. **Component/Style Discovery:** Use `get_local_components` and `get_styles` to understand available resources
+
+### Logging Requirements
+
+#### Mandatory Logging Format
+```
+[Figma] [Category] [Action] [Details]
+```
+
+#### Categories
+- `Channel` - Channel connection events
+- `Connection` - WebSocket connection status
+- `Get` - Information retrieval operations
+- `Create` - Element creation operations
+- `Update` - Modification operations
+- `Delete` - Deletion operations
+- `Error` - Error conditions
+
+#### Required Logs
+
+**Channel Operations:**
+- Log channel join: `[Figma] [Channel] Joined: {channel}`
+- Log connection status changes: `[Figma] [Connection] Status: {connected/disconnected}`
+
+**Information Retrieval:**
+- Log document info requests: `[Figma] [Get] Document info: {document name} ({page count} pages)`
+- Log selection queries: `[Figma] [Get] Selection: {count} items`
+- Log node info requests: `[Figma] [Get] Node info: {nodeId} - {node type}`
+- Log scan operations: `[Figma] [Get] Scan {type}: {count} found in {nodeId}`
+
+**Creation Operations:**
+- Log before: `[Figma] [Create] {type} at ({x}, {y}) size {width}x{height}`
+- Log after: `[Figma] [Create] Success: {type} ID {nodeId}`
+
+**Modification Operations:**
+- Log before: `[Figma] [Update] {type} {nodeId}: {operation}`
+- Log after: `[Figma] [Update] Success: {nodeId} - {changes summary}`
+- For text: `[Figma] [Update] Text {nodeId}: "{old}" → "{new}"`
+
+**Deletion Operations:**
+- Log before: `[Figma] [Delete] {count} nodes: {nodeIds}`
+- Log after: `[Figma] [Delete] Success: {count} nodes removed`
+
+**Error Logging:**
+- Always include: `[Figma] [Error] {operation} failed: {error message} (Node: {nodeId}, Channel: {channel})`
+- Include context: operation type, parameters, node IDs involved
+
+#### Logging Best Practices
+- Log to stderr (not stdout) to avoid MCP protocol issues
+- Include node IDs in all logs for traceability
+- Log both before and after operations when possible
+- Include counts and summaries for bulk operations
+- Always log errors with full context
+- Progress updates should be 0–100% (avoid fractional 0–1); send 100 on completion
+
+## Project Structure
+- Always create MCP servers inside dedicated folders
+- Keep server configuration files organized in `.cursor/`
+- Maintain clear separation between server code and plugin code
+- Scripts organized in `scripts/` by category (setup, server, utils)
+- Documentation organized in `docs/` by purpose
+
+## Development Guidelines
+- Use Bun as the runtime environment (not Node.js)
+- Test WebSocket connections before deploying
+- Always verify channel connections before sending commands
+- Handle errors gracefully with proper logging to stderr
+- Use TypeScript strict mode where applicable
+- Start WebSocket with `bun run socket` (scripts/server/start-websocket.*); keep terminal open
+- Honor `PORT`/`HOST` env for socket binding (default 3055/localhost)
+- Do not override `ws.close`; rely on close events for clean teardown
+
+## Operation Workflows
+
+### Standard Read Workflow
+1. Join channel: `join_channel(channel)`
+2. Get document overview: `get_document_info()`
+3. Get current selection: `get_selection()`
+4. Analyze selection: `read_my_design()` or `get_node_info(nodeId)`
+5. Log all retrieved information
+
+### Standard Create Workflow
+1. Join channel: `join_channel(channel)`
+2. Get document info: `get_document_info()` (understand context)
+3. Create element: `create_rectangle()`, `create_frame()`, or `create_text()`
+4. Log creation with node ID
+5. Apply styling: `set_fill_color()`, `set_stroke_color()`, etc.
+6. Verify: `get_node_info(nodeId)`
+7. Log final state
+
+### Standard Update Workflow
+1. Join channel: `join_channel(channel)`
+2. Get current state: `get_node_info(nodeId)` or `get_selection()`
+3. Log current state
+4. Perform update: `set_text_content()`, `move_node()`, etc.
+5. Verify: `get_node_info(nodeId)`
+6. Log changes made
+
+### Bulk Operation Workflow
+1. Join channel: `join_channel(channel)`
+2. Scan for targets: `scan_text_nodes()` or `scan_nodes_by_types()`
+3. Log targets found: `[Figma] [Get] Scan: {count} targets found`
+4. Prepare batch data
+5. Execute batch: `set_multiple_text_contents()`, `set_multiple_annotations()`, etc.
+6. Log batch results: `[Figma] [Update] Batch: {count} items updated`
+7. Verify sample: `get_node_info(sampleNodeId)`
+
+## Best Practices
+
+### Information Retrieval
+- Always start with `get_document_info` for context
+- Use `get_selection` to understand current state
+- Use `read_my_design` for detailed analysis of selection
+- Scan before bulk operations to identify all targets
+- Cache document info when making multiple operations
+
+### Element Creation
+- Use `create_frame` for containers with auto-layout
+- Use `create_rectangle` for basic shapes
+- Use `create_text` for text elements
+- Always specify parent when creating child elements
+- Log node IDs immediately after creation
+
+### Modifications
+- Get current state before modifying
+- Use batch operations for multiple items
+- Verify changes after modifications
+- Log all changes with before/after states
+
+### Error Handling
+- All commands can throw exceptions - handle appropriately
+- Check WebSocket connection status before operations
+- Verify channel is joined before operations
+- Implement timeout handling for long-running operations
+- Always log errors with full context (operation, node IDs, parameters)
+
+## Testing
+- Test locally before committing changes
+- Verify all MCP tools are working correctly
+- Test with actual Figma files when possible
+- Monitor WebSocket server logs during development
+- Use status check script: `.\scripts\utils\check-status.ps1`
+- Test connection flow: channel → document info → selection → operations
+- Quick verification checklist:
+  - WebSocket server running on 3055 (or overridden PORT/HOST)
+  - Channel joined via plugin + `join_channel`
+  - `get_document_info` / `get_selection` return data
+  - Create → verify → delete round-trip succeeds
+  - Progress updates reach 100% for long operations
+
+## Performance
+- Use batch operations instead of individual calls
+- Scan once, operate many times
+- Cache document info for multiple operations
+- Use chunking for large designs (built into scan functions)
+- Monitor operation counts and log performance metrics
+
+## Security
+- WebSocket server runs on localhost only
+- No external network access required
+- Channel-based isolation
+- Log security-relevant operations

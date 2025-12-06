@@ -1,0 +1,138 @@
+# Folder Structure Rules
+
+## Core Principles
+
+### Separation of Concerns
+- **Different file types** → Different folders
+- **Different purposes** → Different subfolders  
+- **Different categories** → Clear hierarchy
+- **Scalability** → Easy to add new content without clutter
+
+## Folder Organization
+
+### Documentation (`docs/`)
+- **getting-started/** - New user onboarding (installation, quick-start, activation)
+- **guides/** - Step-by-step instructions (tutorial, setup, troubleshooting)
+- **reference/** - Quick lookup (functions, API, examples)
+- **development/** - Developer content (local-vs-official, contributing, architecture)
+- **archive/** - Historical and test documentation
+
+### Scripts (`scripts/`)
+- **setup/** - Installation and setup scripts
+- **server/** - Server lifecycle management (start, stop, restart)
+- **utils/** - Utility and helper scripts (status check, config creation)
+
+### Configuration (`.cursor/`)
+- **mcp.json** - MCP server configuration
+- **rules/** - Cursor rules organized by topic
+  - `mcp-figma-rules.mdc` - Figma-specific rules
+  - `folder-structure.mdc` - Structure guidelines
+
+## File Naming
+
+### Documentation Files
+- Use **kebab-case**: `my-new-guide.md`
+- Use **README.md** for folder indexes
+- Use **index.md** for main navigation
+
+### Script Files
+- Use **kebab-case**: `check-status.ps1`, `start-websocket.sh`
+- Include platform suffix: `.ps1` (PowerShell), `.sh` (Bash)
+
+### Configuration Files
+- Standard names: `package.json`, `tsconfig.json`, `mcp.json`
+- Keep standard naming conventions
+
+## Adding New Content
+
+### Before Adding
+1. **Identify category** - Which folder does it belong to?
+2. **Check existing structure** - Is there a similar file?
+3. **Follow naming convention** - Use kebab-case
+4. **Update indexes** - Add to relevant README/index files
+
+### Documentation
+- Determine category (getting-started, guides, reference, development, archive)
+- Use descriptive kebab-case filename
+- Update `docs/index.md` with link
+- Add to relevant category section
+
+### Scripts
+- Determine function (setup, server, utils)
+- Use descriptive name with platform suffix
+- Document in `scripts/README.md`
+- Include usage examples
+
+## Folder Depth Guidelines
+
+- **Maximum depth:** 3-4 levels
+- **Root level:** Project-wide files only (README, LICENSE, etc.)
+- **First level:** Major categories (docs/, scripts/, .cursor/)
+- **Second level:** Subcategories (getting-started/, guides/, etc.)
+- **Third level:** Individual files or further categorization
+
+## Examples
+
+### ✅ Good Structure
+```
+docs/
+  guides/
+    tutorial.md
+    setup.md
+    troubleshooting.md
+```
+
+### ❌ Avoid (Too Deep)
+```
+docs/
+  guides/
+    tutorial/
+      part1.md
+      part2.md
+      part3.md
+```
+**Better:** Single `tutorial.md` with sections, or `tutorial-part1.md`, `tutorial-part2.md`
+
+### ✅ Good Separation
+```
+scripts/
+  setup/
+    setup.ps1
+  server/
+    start-websocket.ps1
+  utils/
+    check-status.ps1
+```
+
+### ❌ Avoid (Flat Structure)
+```
+scripts/
+  setup.ps1
+  start-websocket.ps1
+  check-status.ps1
+  create-config.ps1
+```
+**Better:** Organize by function in subfolders
+
+## Maintenance
+
+- **Regular review** - Check structure quarterly
+- **Consolidate** - Merge similar content when possible
+- **Archive** - Move outdated content to archive/
+- **Document** - Keep README files in folders updated
+- **Consistency** - Follow established patterns
+
+## Rules Summary
+
+1. **One purpose per folder** - Clear, single responsibility
+2. **Consistent naming** - kebab-case for all files
+3. **README files** - Explain folder contents
+4. **Clear hierarchy** - Maximum 3-4 levels
+5. **Scalable** - Easy to extend without restructuring
+6. **Separated concerns** - Different types in different folders
+
+---
+
+**See Also:**
+- [Structure Guide](../docs/structure.md) - Detailed structure documentation
+- [AGENTS.md](../AGENTS.md) - Agent-focused instructions
